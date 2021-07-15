@@ -24,7 +24,7 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
     - name: Build & Test
-      run: make
+      run: make build test
     - name: Coverage
       run: bash <(curl -s https://codecov.io/bash)
   lint:
