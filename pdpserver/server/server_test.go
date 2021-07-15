@@ -20,10 +20,7 @@ func TestValidate_hook_pre(t *testing.T) {
 
 	msg := new(pb.Msg)
 
-	_, err := s.Validate(nil, msg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	s.Validate(nil, msg)
 
 	if e := true; called != e {
 		t.Errorf("hook was not called")
@@ -46,10 +43,7 @@ func TestValidate_hook_post(t *testing.T) {
 
 	msg := new(pb.Msg)
 
-	_, err := s.Validate(nil, msg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	s.Validate(nil, msg)
 
 	if e := true; called != e {
 		t.Error("hook was not called")
@@ -86,10 +80,7 @@ func TestValidate_hook_context(t *testing.T) {
 
 	msg := new(pb.Msg)
 
-	_, err := s.Validate(nil, msg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	s.Validate(nil, msg)
 
 	if e := true; hasKey != e {
 		t.Error("key was not passed from pre hook to post hook")

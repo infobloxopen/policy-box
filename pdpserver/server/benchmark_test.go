@@ -870,7 +870,10 @@ func benchmarkRawPolicySet(p *pdp.PolicyStorage, b *testing.B) {
 		c := s.c
 		s.RUnlock()
 
-		r := s.rawValidate(p, c, benchmarkRequests[n%len(benchmarkRequests)].Body)
+		r, err := s.rawValidate(p, c, benchmarkRequests[n%len(benchmarkRequests)].Body)
+		if err != nil {
+			b.Fatal("unexpected err: ", err)
+		}
 
 		effect, n, err := pdp.UnmarshalResponseToAssignmentsArray(r, a[:])
 		if err != nil {
@@ -956,7 +959,10 @@ func benchmarkRawPolicySetToBuffer(p *pdp.PolicyStorage, b *testing.B) {
 		c := s.c
 		s.RUnlock()
 
-		r := s.rawValidateToBuffer(p, c, benchmarkRequests[n%len(benchmarkRequests)].Body, buf[:])
+		r, err := s.rawValidateToBuffer(p, c, benchmarkRequests[n%len(benchmarkRequests)].Body, buf[:])
+		if err != nil {
+			b.Fatal("unexpected err: ", err)
+		}
 
 		effect, n, err := pdp.UnmarshalResponseToAssignmentsArray(r, a[:])
 		if err != nil {

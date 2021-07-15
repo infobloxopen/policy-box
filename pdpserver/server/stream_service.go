@@ -55,7 +55,11 @@ func (s *Server) NewValidationStream(stream pb.PDP_NewValidationStreamServer) er
 				return buffer, nil
 			})})
 		} else {
-			err = stream.Send(&pb.Msg{Body: s.rawValidateToBuffer(p, c, in.Body, buffer)})
+			body, err := s.rawValidateToBuffer(p, c, in.Body, buffer)
+			if err != nil {
+				return err
+			}
+			err = stream.Send(&pb.Msg{Body: body})
 		}
 		if err != nil {
 			s.opts.logger.WithFields(log.Fields{

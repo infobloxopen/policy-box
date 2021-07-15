@@ -47,14 +47,14 @@ func makeFailureResponseWithBuffer(b []byte, err error) []byte {
 	return b[:n]
 }
 
-func (s *Server) rawValidate(p *pdp.PolicyStorage, c *pdp.LocalContentStorage, in []byte) []byte {
+func (s *Server) rawValidate(p *pdp.PolicyStorage, c *pdp.LocalContentStorage, in []byte) ([]byte, error) {
 	if p == nil {
-		return makeFailureResponse(newMissingPolicyError())
+		return makeFailureResponse(newMissingPolicyError()), newMissingPolicyError()
 	}
 
 	ctx, err := s.newContext(c, in)
 	if err != nil {
-		return makeFailureResponse(err)
+		return makeFailureResponse(err), err
 	}
 
 	if s.opts.logger.Level >= log.DebugLevel {
@@ -74,12 +74,7 @@ func (s *Server) rawValidate(p *pdp.PolicyStorage, c *pdp.LocalContentStorage, i
 		}).Debug("Response")
 	}
 
-	out, err := r.Marshal(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	return out
+	return r.Marshal(ctx)
 }
 
 func (s *Server) rawValidateWithAllocator(p *pdp.PolicyStorage, c *pdp.LocalContentStorage, in []byte, f func(n int) ([]byte, error)) []byte {
@@ -117,14 +112,14 @@ func (s *Server) rawValidateWithAllocator(p *pdp.PolicyStorage, c *pdp.LocalCont
 	return out
 }
 
-func (s *Server) rawValidateToBuffer(p *pdp.PolicyStorage, c *pdp.LocalContentStorage, in []byte, out []byte) []byte {
+func (s *Server) rawValidateToBuffer(p *pdp.PolicyStorage, c *pdp.LocalContentStorage, in []byte, out []byte) ([]byte, error) {
 	if p == nil {
-		return makeFailureResponseWithBuffer(out, newMissingPolicyError())
+		return makeFailureResponseWithBuffer(out, newMissingPolicyError()), newMissingPolicyError()
 	}
 
 	ctx, err := s.newContext(c, in)
 	if err != nil {
-		return makeFailureResponseWithBuffer(out, err)
+		return makeFailureResponseWithBuffer(out, err), err
 	}
 
 	if s.opts.logger.Level >= log.DebugLevel {
@@ -145,11 +140,7 @@ func (s *Server) rawValidateToBuffer(p *pdp.PolicyStorage, c *pdp.LocalContentSt
 	}
 
 	n, err := r.MarshalToBuffer(out, ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	return out[:n]
+	return out[:n], err
 }
 
 // Validate is a server handler for gRPC call
@@ -180,12 +171,12 @@ func (s *Server) Validate(ctx context.Context, in *pb.Msg) (*pb.Msg, error) {
 	s.RUnlock()
 
 	if s.opts.autoResponseSize {
-		msg.Body = s.rawValidate(p, c, in.Body)
+		msg.Body, err = s.rawValidate(p, c, in.Body)
 		return msg, err
 	}
 
 	b := s.pool.Get()
-	msg.Body = s.rawValidateToBuffer(p, c, in.Body, b)
+	msg.Body, err = s.rawValidateToBuffer(p, c, in.Body, b)
 	s.pool.Put(b)
 
 	return msg, err
